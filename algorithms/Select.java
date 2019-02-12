@@ -37,7 +37,7 @@ public class Select {
     public boolean checkPartition(int[] ns, int pidx, int bidx, int eidx) {
         int p = ns[pidx];
         for (int i = bidx; i <= eidx; i++) {
-            System.out.println("i = "+i+", pidx = "+pidx+", p = "+p+", ns[i] = "+ns[i]);
+            //System.out.println("i = "+i+", pidx = "+pidx+", p = "+p+", ns[i] = "+ns[i]);
             if (i < pidx && p < ns[i]) {
                 return false;
             } else if (i > pidx && ns[i] <= p) {
@@ -52,53 +52,38 @@ public class Select {
             throw new IllegalArgumentException("eidx < bidx");
         }
         int pidx = bidx + rand.nextInt(eidx - bidx + 1);
-        int p = ns[pidx];
-        System.out.println(pidx + " " + p);
-        int i = bidx;
+        swap(ns,pidx,bidx);
+        pidx = bidx;
+        int i = bidx + 1;
         int j = eidx;
+        //System.out.println(pidx + " " + p);
         while (i <= j) {
-            while (ns[i] < p) {
+            if(ns[pidx] > ns[i]) {
+                swap(ns,pidx,i);
+                pidx = i;
                 i++;
-            }
-            while (p < ns[j]) {
+            } else if (ns[pidx] == ns[i]) {
+                pidx = i;
+                i++;
+            } else {
+                swap(ns,i,j);
                 j--;
             }
-            if (i <= j) {
-                swap(ns, i++, j--);
-            }
         }
-        return i < ns.length ? i : ns.length - 1;
-    }
-
-    public int hoarePartition (int[] a, int p, int r) {
-        int x=a[p],i=p-1,j=r+1;
-        int idx = p;
-        System.out.println(p + " " + x);
-        while (true) {
-            do  j--; while (a[j] > x);
-            do  i++; while (a[i] < x);
-            if  (i < j) {
-                if(idx == i) { idx = j; }
-                else if(idx == j) { idx = i; }
-                swap(a, i, j);
-            }
-            else {
-                return idx;
-            }
-        }
+        return pidx;
     }
 
     public static void main(String[] args) {
 
-        // int[] ns = {1, 2, 3, 4 ,5, 5, 5, 6 ,7, 8, 9};
-        int[] ns = { 1, 2, 3};
+         int[] ns = {1, 2, 3, 4 ,5, 5, 5, 6 ,7, 8, 9};
+        //int[] ns = { 1, 2, 3};
         System.out.println("Fuzz partition method.");
         Select select = new Select();
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10000; i++) {
             select.shuffle(ns);
             int[] nsWorking = Arrays.copyOf(ns, ns.length);
             try {
-                int pidx = select.hoarePartition(nsWorking, 0, ns.length - 1);
+                int pidx = select.partition(nsWorking, 0, ns.length - 1);
                 if (!select.checkPartition(nsWorking, pidx, 0, ns.length - 1)) {
                     System.out.println("FAILURE: partition(" + Arrays.toString(ns) + ")[pidx = " + pidx + "] = "
                             + Arrays.toString(nsWorking));
