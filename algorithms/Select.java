@@ -22,6 +22,7 @@ public class Select {
         ns[j] = tmp;
     }
 
+    /* XXX: Broken!!! */
     private int quickSelect(int[] ns, int kth, int bidx, int eidx, Random rand) {
         if(eidx < bidx) {
             throw new
@@ -31,12 +32,9 @@ public class Select {
             return ns[eidx];
         }
         else if(bidx + 1 == eidx) {
-            return Math.max(ns[bidx], ns[eidx]);
+            return ns[kth-1];
         }
-        int idx = bidx; /*+ rand.nextInt(eidx-bidx+1);*/
-        swap(ns, bidx, idx);
-        idx = bidx;
-        int pv = ns[idx];
+        int pv = ns[eidx];
         int i = bidx;
         int j = eidx;
         System.out.println("bidx = "+bidx+", eidx = "+eidx);
@@ -49,10 +47,9 @@ public class Select {
                 i++;
             }
         }
-        idx = i;
-        System.out.println("idx = "+idx+", ns = "+Arrays.toString(ns));
-        if(0 < kth - idx + 1) { return quickSelect(ns, kth - idx + 1, idx++, eidx, rand); }
-        else { return quickSelect(ns, kth, bidx, idx, rand); }
+        System.out.println("j = "+j+", ns = "+Arrays.toString(ns));
+        if(0 < kth - j) { return quickSelect(ns, kth - j, j++, eidx, rand); }
+        else { return quickSelect(ns, kth, bidx, j, rand); }
     }
 
     public int quickSelect(int[] ns, int kth) {
@@ -68,10 +65,10 @@ public class Select {
     }
 
     public static void main(String[] args) {
-        //int[] ns = {1, 2, 3, 4 ,5, 5, 5, 6 ,7, 8, 9};
-        int[] ns = {2, 3, 1};
+        int[] ns = {1, 2, 3, 4 ,5, 5, 5, 6 ,7, 8, 9};
+        //int[] ns = {2, 3, 1};
         Select select = new Select();
-        //select.shuffle(ns);
+        select.shuffle(ns);
         System.out.println(Arrays.toString(ns));
         System.out.println(select.quickSelect(Arrays.copyOf(ns,ns.length), 3));
         System.out.println(select.sortSelect(Arrays.copyOf(ns,ns.length), 3));
