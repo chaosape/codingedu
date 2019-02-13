@@ -11,7 +11,8 @@ public class Select {
 
     private void validKth(int[] ns, int kth) {
         if (kth < 1 || kth > ns.length) {
-            throw new IllegalArgumentException("Bad kth: 0 < kth <= ns.length.");
+            String excStr = "Bad kth: 0 < kth <= ns.length.";
+            throw new IllegalArgumentException(excStr);
         }
     }
 
@@ -37,7 +38,6 @@ public class Select {
     public boolean checkPartition(int[] ns, int pidx, int bidx, int eidx) {
         int p = ns[pidx];
         for (int i = bidx; i <= eidx; i++) {
-            //System.out.println("i = "+i+", pidx = "+pidx+", p = "+p+", ns[i] = "+ns[i]);
             if (i < pidx && p < ns[i]) {
                 return false;
             } else if (i > pidx && ns[i] <= p) {
@@ -56,7 +56,6 @@ public class Select {
         pidx = bidx;
         int i = bidx + 1;
         int j = eidx;
-        //System.out.println(pidx + " " + p);
         while (i <= j) {
             if(ns[pidx] > ns[i]) {
                 swap(ns,pidx,i);
@@ -73,42 +72,75 @@ public class Select {
         return pidx;
     }
 
-    public static void main(String[] args) {
-
-         int[] ns = {1, 2, 3, 4 ,5, 5, 5, 6 ,7, 8, 9};
-        //int[] ns = { 1, 2, 3};
-        System.out.println("Fuzz partition method.");
-        Select select = new Select();
-        for (int i = 0; i < 10000; i++) {
-            select.shuffle(ns);
-            int[] nsWorking = Arrays.copyOf(ns, ns.length);
-            try {
-                int pidx = select.partition(nsWorking, 0, ns.length - 1);
-                if (!select.checkPartition(nsWorking, pidx, 0, ns.length - 1)) {
-                    System.out.println("FAILURE: partition(" + Arrays.toString(ns) + ")[pidx = " + pidx + "] = "
-                            + Arrays.toString(nsWorking));
-                }
-            } catch (Exception e) {
-                e.printStackTrace(System.out);
-                System.out.println("FAILURE: ns = " + Arrays.toString(ns));
+    private int quickSelect(int[] ns, int kth, int bidx, int eidx) {
+        if(eidx < bidx) {
+            throw new IndexOutOfBoundsException("BUG: eidx < bidx");
+        }
+        else if(bidx == eidx) {
+            if(kth != 1) {
+                String excStr = "bidx == eidx && kth != 1 (kth = "+kth+")";
+                throw new IllegalArgumentException(excStr);
             }
+            return ns[eidx];
+        }
+        else if(bidx + 1 == eidx) {
+            if(kth != 2) {
+                String excStr = "bidx + 1 == eidx && kth != 2 (kth = "+kth+")";
+                throw new IllegalArgumentException(excStr);
+            }
+            return ns[kth-1];
+        }
+        int pidx = partition(ns, bidx, eidx);
+        int leftOver = kth - (pidx - bidx + 1);
+        if(0 < leftOver ) {
+            return quickSelect(ns, leftOver, pidx+1, eidx);
+        }
+        else if (leftOver == 0) {
+            return ns[pidx];
+        }
+        else {
+            return quickSelect(ns, kth, bidx, pidx);
         }
     }
 
-    /* XXX: Broken!!! */
-    /*
-     * private int quickSelect(int[] ns, int kth, int bidx, int eidx, Random rand) {
-     * if(eidx < bidx) { throw new IndexOutOfBoundsException("BUG: eidx < bidex"); }
-     * else if(bidx == eidx) { return ns[eidx]; } else if(bidx + 1 == eidx) { return
-     * ns[kth-1]; } int pv = ns[eidx]; int i = bidx; int j = eidx;
-     * System.out.println("bidx = "+bidx+", eidx = "+eidx); while(i <= j) {
-     * while(ns[i] < pv) { i++; } while(pv < ns[j]) { j--; } if(i <= j) {
-     * swap(ns,j,i); j--; i++; } }
-     * System.out.println("j = "+j+", ns = "+Arrays.toString(ns)); if(0 < kth - j) {
-     * return quickSelect(ns, kth - j, j++, eidx, rand); } else { return
-     * quickSelect(ns, kth, bidx, j, rand); } }
-     *
-     * public int quickSelect(int[] ns, int kth) { validKth(ns, kth); return
-     * quickSelect(ns, kth, 0, ns.length -1, new Random()); }
-     */
+    public int quickSelect(int[] ns, int kth) {
+        validKth(ns, kth);
+        return quickSelect(ns, kth, 0, ns.length - 1);
+    }
+
+    public static void main(String[] args) {
+        int[] ns;
+        Select select = new Select();
+        Random rand = new Random();
+        for (int j = 0; j < 100; j++) {
+            ns = new int[rand.nextInt(1000)];
+            for(int i = 0; i < ns.length; i++) { ns[i] = rand.nextInt(); }
+            for (int i = 0; i < 100; i++) {
+                select.shuffle(ns);
+                int[] nsWorking = Arrays.copyOf(ns, ns.length);
+                try {
+                    int pidx = select.partition(nsWorking, 0, ns.length - 1);
+                    if (!select.checkPartition(nsWorking, pidx, 0, ns.length - 1)) {
+                        System.out.println("FAILURE: partition("
+                                           + Arrays.toString(ns) + ")"
+                                           +"[pidx = " + pidx + "] = "
+                                           + Arrays.toString(nsWorking)+".");
+                    }
+                    int ssAns = select.sortSelect(Arrays.copyOf(ns, ns.length)
+                                                  ,ns.length);
+                    int qsAns = select.quickSelect(Arrays.copyOf(ns, ns.length)
+                                                   ,ns.length);
+                    if(ssAns != qsAns) {
+                        String failStr;
+                        failStr = "FAILURE:"
+                            +" quickSelect("+Arrays.toString(ns)+") = "+qsAns
+                            +" but expected "+ssAns+".";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(System.out);
+                    System.out.println("FAILURE: ns = " + Arrays.toString(ns));
+                }
+            }
+        }
+    }
 }
